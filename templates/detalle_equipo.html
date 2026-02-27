@@ -1,45 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ficha Técnica</title>
+    <title>Detalle Equipo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-
 <div class="container mt-4">
-
-<h3>Ficha Técnica del Equipo</h3>
-
-<div class="card p-4 shadow">
-    <p><strong>Nombre:</strong> {{ equipo.nombre }}</p>
-    <p><strong>Marca:</strong> {{ equipo.marca }}</p>
-    <p><strong>Número de Serie:</strong> {{ equipo.serie }}</p>
-    <p><strong>Ubicación:</strong> {{ equipo.ubicacion }}</p>
-</div>
-
-<h5 class="mt-4">Órdenes Asociadas</h5>
-
-<table class="table table-bordered">
-    <thead>
+    <h3>Ficha del Equipo: {{ equipo.nombre }}</h3>
+    <table class="table table-bordered">
         <tr>
-            <th>Técnico</th>
-            <th>Estado</th>
-            <th>Fecha</th>
+            <th>Nombre</th>
+            <td>{{ equipo.nombre }}</td>
         </tr>
-    </thead>
-    <tbody>
-        {% for o in equipo.ordenes %}
         <tr>
-            <td>{{ o.tecnico }}</td>
-            <td>{{ o.estado }}</td>
-            <td>{{ o.fecha.strftime("%d/%m/%Y") }}</td>
+            <th>Marca</th>
+            <td>{{ equipo.marca }}</td>
         </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<a href="/equipos" class="btn btn-secondary">Volver</a>
-
+        <tr>
+            <th>Modelo</th>
+            <td>{{ equipo.modelo }}</td>
+        </tr>
+        <tr>
+            <th>Número de Serie</th>
+            <td>{{ equipo.numero_serie }}</td>
+        </tr>
+        <tr>
+            <th>Ubicación</th>
+            <td>{{ equipo.ubicacion }}</td>
+        </tr>
+        <tr>
+            <th>Fecha de Registro</th>
+            <td>{{ equipo.fecha_registro.strftime("%d/%m/%Y %H:%M") }}</td>
+        </tr>
+        <tr>
+            <th>Órdenes Asociadas</th>
+            <td>
+                <ul>
+                    {% for orden in equipo.ordenes %}
+                    <li>{{ orden.descripcion }} - {{ orden.fecha.strftime("%d/%m/%Y %H:%M") }}</li>
+                    {% else %}
+                    <li>No hay órdenes registradas</li>
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+    </table>
+    <a href="/equipos" class="btn btn-secondary">Volver a Equipos</a>
 </div>
 </body>
 </html>
