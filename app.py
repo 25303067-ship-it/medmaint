@@ -7,11 +7,17 @@ from datetime import datetime
 app = Flask(__name__)
 
 # =========================
-# CONFIGURACIÓN
+# CONFIGURACIÓN SEGURA
 # =========================
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "medmaint_secret_key")
 
+# Configuración para producción HTTPS (Render)
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# Base de datos
 database_url = os.environ.get("DATABASE_URL")
 
 if database_url:
@@ -19,7 +25,6 @@ if database_url:
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 else:
-    # Para uso local con SQLite
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -75,8 +80,8 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form.get("email")
+        password = request.form.get("password")
 
         usuario = Usuario.query.filter_by(email=email).first()
 
@@ -96,9 +101,9 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        nombre = request.form["nombre"]
-        email = request.form["email"]
-        password = generate_password_hash(request.form["password"])
+        nombre = request.form.get("nombre")
+        email = request.form.get("email")
+        password = generate_password_hash(request.form.get("password"))
 
         if Usuario.query.filter_by(email=email).first():
             flash("El usuario ya existe")
@@ -137,11 +142,11 @@ def agregar_equipo():
         return redirect(url_for("login"))
 
     nuevo_equipo = Equipo(
-        nombre=request.form["nombre"],
-        marca=request.form["marca"],
-        modelo=request.form["modelo"],
-        numero_serie=request.form["numero_serie"],
-        ubicacion=request.form["ubicacion"]
+        nombre=request.form.get("nombre"),
+        marca=request.form.get("marca"),
+        modelo=request.form.get("modelo"),
+        numero_serie=request.form.get("numero_serie"),
+        ubicacion=request.form.get("ubicacion")
     )
 
     db.session.add(nuevo_equipo)
@@ -159,8 +164,8 @@ def agregar_orden():
         return redirect(url_for("login"))
 
     nueva_orden = Orden(
-        descripcion=request.form["descripcion"],
-        equipo_id=request.form["equipo_id"]
+        descripcion=request.form.get("descripcion"),
+        equipo_id=request.form.get("equipo_id")
     )
 
     db.session.add(nueva_orden)
@@ -169,8 +174,9 @@ def agregar_orden():
     return redirect(url_for("index"))
 
 # =========================
-# MAIN
+# PRODUCCIÓN (RENDER)
 # =========================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
