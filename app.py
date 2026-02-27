@@ -7,17 +7,15 @@ from datetime import datetime
 app = Flask(__name__)
 
 # =========================
-# CONFIGURACIÓN SEGURA
+# CONFIGURACIÓN
 # =========================
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "medmaint_secret_key")
 
-# Configuración para producción HTTPS (Render)
 app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-# Base de datos
 database_url = os.environ.get("DATABASE_URL")
 
 if database_url:
@@ -36,12 +34,16 @@ db = SQLAlchemy(app)
 # =========================
 
 class Usuario(db.Model):
+    __tablename__ = "usuario"
+
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
 class Equipo(db.Model):
+    __tablename__ = "equipo"
+
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     marca = db.Column(db.String(100))
@@ -51,13 +53,18 @@ class Equipo(db.Model):
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Orden(db.Model):
+    __tablename__ = "orden"
+
     id = db.Column(db.Integer, primary_key=True)
     descripcion = db.Column(db.Text, nullable=False)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
-    equipo_id = db.Column(db.Integer, db.ForeignKey('equipo.id'))
-    equipo = db.relationship('Equipo', backref=db.backref('ordenes', lazy=True))
+    equipo_id = db.Column(db.Integer, db.ForeignKey("equipo.id"))
+    equipo = db.relationship("Equipo", backref=db.backref("ordenes", lazy=True))
 
-# Crear tablas automáticamente
+# =========================
+# CREAR TABLAS AUTOMÁTICAMENTE
+# =========================
+
 with app.app_context():
     db.create_all()
 
@@ -69,8 +76,10 @@ with app.app_context():
 def index():
     if "user_id" not in session:
         return redirect(url_for("login"))
+
     ordenes = Orden.query.order_by(Orden.fecha.desc()).all()
     equipos = Equipo.query.all()
+
     return render_template("index.html", ordenes=ordenes, equipos=equipos)
 
 # -------------------------
@@ -174,7 +183,7 @@ def agregar_orden():
     return redirect(url_for("index"))
 
 # =========================
-# PRODUCCIÓN (RENDER)
+# PRODUCCIÓN
 # =========================
 
 if __name__ == "__main__":
