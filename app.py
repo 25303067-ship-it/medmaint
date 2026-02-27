@@ -17,9 +17,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ==============================
+# ======================
 # MODELOS
-# ==============================
+# ======================
 
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -37,9 +37,9 @@ class Orden(db.Model):
 with app.app_context():
     db.create_all()
 
-# ==============================
+# ======================
 # REGISTRO
-# ==============================
+# ======================
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -61,9 +61,9 @@ def register():
 
     return render_template("register.html")
 
-# ==============================
+# ======================
 # LOGIN
-# ==============================
+# ======================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -84,17 +84,43 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# ==============================
+# ======================
 # PANEL PRINCIPAL
-# ==============================
+# ======================
 
 @app.route("/")
 def index():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    ordenes = Orden.query.order_by(Orden.fecha.desc()).all()
-    return render_template("index.html", ordenes=ordenes)
+    busqueda = request.args.get("buscar", "")
+    estado_filtro = request.args.get("estado", "")
+
+    query = Orden.query
+
+    if busqueda:
+        query = query.filter(
+            Orden.equipo.ilike(f"%{busqueda}%")
+        )
+
+    if estado_filtro:
+        query = query.filter_by(estado=estado_filtro)
+
+    ordenes = query.order_by(Orden.fecha.desc()).all()
+
+    total = Orden.query.count()
+    pendientes = Orden.query.filter_by(estado="Pendiente").count()
+    proceso = Orden.query.filter_by(estado="En proceso").count()
+    finalizadas = Orden.query.filter_by(estado="Finalizado").count()
+
+    return render_template(
+        "index.html",
+        ordenes=ordenes,
+        total=total,
+        pendientes=pendientes,
+        proceso=proceso,
+        finalizadas=finalizadas
+    )
 
 @app.route("/crear", methods=["POST"])
 def crear():

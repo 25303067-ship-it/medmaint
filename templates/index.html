@@ -1,115 +1,118 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>MedMaint</title>
-
-    <!-- Bootstrap -->
+    <title>Panel - MedMaint</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
+    <script src="https://kit.fontawesome.com/4adad0b06d.js" crossorigin="anonymous"></script>
 </head>
-
 <body class="bg-light">
-
-<nav class="navbar navbar-dark bg-primary shadow-sm">
-    <div class="container-fluid">
-        <span class="navbar-brand mb-0 h1">
-            <i class="bi bi-tools"></i> MedMaint
-        </span>
-        <a href="/logout" class="btn btn-light btn-sm">
-            <i class="bi bi-box-arrow-right"></i> Salir
-        </a>
-    </div>
-</nav>
 
 <div class="container mt-4">
 
-    <!-- Tarjeta Nueva Orden -->
-    <div class="card p-4 shadow-sm mb-4">
-        <h5 class="mb-3">
-            <i class="bi bi-plus-circle text-success"></i> Nueva Orden
-        </h5>
+<h2 class="mb-4">
+    <i class="fa-solid fa-screwdriver-wrench"></i> Panel de Mantenimiento
+</h2>
 
-        <form method="POST" action="/crear">
-            <div class="row g-2">
-                <div class="col-md-5">
-                    <input type="text" name="equipo" class="form-control" placeholder="Equipo" required>
-                </div>
-                <div class="col-md-5">
-                    <input type="text" name="tecnico" class="form-control" placeholder="Técnico" required>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="bi bi-plus-circle"></i> Agregar
-                    </button>
-                </div>
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary shadow">
+            <div class="card-body">
+                <h5>Total</h5>
+                <h3>{{ total }}</h3>
             </div>
-        </form>
-    </div>
-
-    <!-- Tabla Órdenes -->
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h5 class="mb-3">
-                <i class="bi bi-list-check text-primary"></i> Órdenes Registradas
-            </h5>
-
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Equipo</th>
-                        <th>Técnico</th>
-                        <th>Estado</th>
-                        <th>Fecha</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                {% for orden in ordenes %}
-                    <tr>
-                        <td>{{ orden.equipo }}</td>
-                        <td>{{ orden.tecnico }}</td>
-
-                        <td>
-                            {% if orden.estado == "Pendiente" %}
-                                <span class="badge bg-warning text-dark">
-                                    <i class="bi bi-hourglass-split"></i> {{ orden.estado }}
-                                </span>
-                            {% elif orden.estado == "En proceso" %}
-                                <span class="badge bg-primary">
-                                    <i class="bi bi-gear-fill"></i> {{ orden.estado }}
-                                </span>
-                            {% else %}
-                                <span class="badge bg-success">
-                                    <i class="bi bi-check-circle-fill"></i> {{ orden.estado }}
-                                </span>
-                            {% endif %}
-                        </td>
-
-                        <td>{{ orden.fecha.strftime("%Y-%m-%d %H:%M") }}</td>
-
-                        <td class="text-center">
-                            <a href="/cambiar/{{ orden.id }}" class="btn btn-sm btn-outline-primary me-1">
-                                <i class="bi bi-arrow-repeat"></i>
-                            </a>
-
-                            <a href="/borrar/{{ orden.id }}" class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-
-            </table>
-
         </div>
     </div>
 
+    <div class="col-md-3">
+        <div class="card text-white bg-warning shadow">
+            <div class="card-body">
+                <h5>Pendientes</h5>
+                <h3>{{ pendientes }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-info shadow">
+            <div class="card-body">
+                <h5>En proceso</h5>
+                <h3>{{ proceso }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success shadow">
+            <div class="card-body">
+                <h5>Finalizadas</h5>
+                <h3>{{ finalizadas }}</h3>
+            </div>
+        </div>
+    </div>
 </div>
 
+<form method="GET" class="row mb-3">
+    <div class="col-md-4">
+        <input type="text" name="buscar" class="form-control" placeholder="Buscar equipo...">
+    </div>
+
+    <div class="col-md-3">
+        <select name="estado" class="form-select">
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="En proceso">En proceso</option>
+            <option value="Finalizado">Finalizado</option>
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button class="btn btn-dark w-100">
+            Filtrar
+        </button>
+    </div>
+</form>
+
+<form method="POST" action="/crear" class="row mb-4">
+    <div class="col-md-6">
+        <input type="text" name="equipo" class="form-control" placeholder="Nombre del equipo" required>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-success w-100">
+            Crear
+        </button>
+    </div>
+</form>
+
+<div class="card shadow">
+<div class="card-body">
+<table class="table table-hover">
+<thead>
+<tr>
+<th>Equipo</th>
+<th>Técnico</th>
+<th>Estado</th>
+<th>Fecha</th>
+<th>Acciones</th>
+</tr>
+</thead>
+<tbody>
+{% for o in ordenes %}
+<tr>
+<td>{{ o.equipo }}</td>
+<td>{{ o.tecnico }}</td>
+<td>{{ o.estado }}</td>
+<td>{{ o.fecha.strftime("%d/%m/%Y") }}</td>
+<td>
+<a href="/cambiar/{{ o.id }}" class="btn btn-sm btn-primary">Cambiar</a>
+<a href="/borrar/{{ o.id }}" class="btn btn-sm btn-danger">Borrar</a>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
 </body>
 </html>
