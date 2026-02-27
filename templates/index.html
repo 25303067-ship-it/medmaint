@@ -1,28 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
     <title>MedMaint</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h2>Sistema de Gestión de Mantenimiento</h2>
+<body class="bg-light">
 
-    <form method="POST" action="/crear">
-        <input type="text" name="equipo" placeholder="Equipo" required>
-        <input type="text" name="tecnico" placeholder="Técnico" required>
-        <button type="submit">Agregar</button>
-    </form>
+<nav class="navbar navbar-dark bg-primary">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">Sistema de Gestión de Mantenimiento</span>
+        <a href="/logout" class="btn btn-light btn-sm">Cerrar sesión</a>
+    </div>
+</nav>
 
-    <hr>
+<div class="container mt-4">
 
-    {% for orden in ordenes %}
-        <p>
-            {{ orden.equipo }} - {{ orden.tecnico }} - {{ orden.estado }}
-            <a href="/cambiar/{{ orden.id }}">Cambiar</a>
-            <a href="/borrar/{{ orden.id }}">Borrar</a>
-        </p>
-    {% endfor %}
+    <div class="card p-4 shadow-sm mb-4">
+        <h5 class="mb-3">Nueva Orden</h5>
+        <form method="POST" action="/crear">
+            <div class="row">
+                <div class="col-md-5">
+                    <input type="text" name="equipo" class="form-control" placeholder="Equipo" required>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" name="tecnico" class="form-control" placeholder="Técnico" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-success w-100">Agregar</button>
+                </div>
+            </div>
+        </form>
+    </div>
 
-    <br>
-    <a href="/logout">Cerrar sesión</a>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3">Órdenes Registradas</h5>
+
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Equipo</th>
+                        <th>Técnico</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for orden in ordenes %}
+                    <tr>
+                        <td>{{ orden.equipo }}</td>
+                        <td>{{ orden.tecnico }}</td>
+                        <td>
+                            {% if orden.estado == "Pendiente" %}
+                                <span class="badge bg-warning text-dark">{{ orden.estado }}</span>
+                            {% elif orden.estado == "En proceso" %}
+                                <span class="badge bg-primary">{{ orden.estado }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ orden.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ orden.fecha.strftime("%Y-%m-%d %H:%M") }}</td>
+                        <td>
+                            <a href="/cambiar/{{ orden.id }}" class="btn btn-sm btn-outline-primary">Cambiar</a>
+                            <a href="/borrar/{{ orden.id }}" class="btn btn-sm btn-outline-danger">Borrar</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
 </body>
 </html>
