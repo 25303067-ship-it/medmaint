@@ -40,6 +40,10 @@
         </span>
 
         <div class="d-flex align-items-center text-white">
+            <a href="/equipos" class="btn btn-outline-light btn-sm me-3">
+                <i class="fa-solid fa-microchip"></i> Equipos
+            </a>
+
             <i class="fa-solid fa-user me-2"></i>
             <strong class="me-3">{{ session["user"] }}</strong>
 
@@ -95,51 +99,43 @@
     </div>
 </div>
 
-<!-- BUSCADOR -->
-<div class="card bg-dark shadow p-3 mb-4">
-    <form method="GET" class="row g-2">
-        <div class="col-md-4">
-            <input type="text" name="buscar" class="form-control" placeholder="Buscar equipo...">
-        </div>
+<!-- CREAR ORDEN -->
+<div class="card bg-dark shadow p-4 mb-4">
+    <h5 class="mb-3">
+        <i class="fa-solid fa-plus"></i> Nueva Orden
+    </h5>
 
-        <div class="col-md-3">
-            <select name="estado" class="form-select">
-                <option value="">Todos los estados</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="En proceso">En proceso</option>
-                <option value="Finalizado">Finalizado</option>
+    <form method="POST" action="/crear" class="row g-2">
+
+        <div class="col-md-6">
+            <select name="equipo_id" class="form-select" required>
+                <option value="">Seleccionar equipo</option>
+                {% for e in equipos %}
+                    <option value="{{ e.id }}">
+                        {{ e.nombre }} - {{ e.marca }} ({{ e.ubicacion }})
+                    </option>
+                {% endfor %}
             </select>
         </div>
 
-        <div class="col-md-2">
-            <button class="btn btn-light w-100">
-                <i class="fa-solid fa-magnifying-glass"></i> Filtrar
-            </button>
-        </div>
-    </form>
-</div>
-
-<!-- CREAR ORDEN -->
-<div class="card bg-dark shadow p-3 mb-4">
-    <form method="POST" action="/crear" class="row g-2">
-        <div class="col-md-6">
-            <input type="text" name="equipo" class="form-control" placeholder="Nombre del equipo" required>
-        </div>
         <div class="col-md-2">
             <button class="btn btn-success w-100">
                 <i class="fa-solid fa-plus"></i> Crear
             </button>
         </div>
+
     </form>
 </div>
 
-<!-- TABLA -->
+<!-- TABLA DE ÓRDENES -->
 <div class="card bg-dark shadow">
     <div class="card-body">
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
                     <th>Equipo</th>
+                    <th>Marca</th>
+                    <th>Ubicación</th>
                     <th>Técnico</th>
                     <th>Estado</th>
                     <th>Fecha</th>
@@ -149,8 +145,11 @@
             <tbody>
                 {% for o in ordenes %}
                 <tr>
-                    <td>{{ o.equipo }}</td>
+                    <td>{{ o.equipo_rel.nombre }}</td>
+                    <td>{{ o.equipo_rel.marca }}</td>
+                    <td>{{ o.equipo_rel.ubicacion }}</td>
                     <td>{{ o.tecnico }}</td>
+
                     <td>
                         {% if o.estado == "Pendiente" %}
                             <span class="badge bg-warning badge-estado">{{ o.estado }}</span>
@@ -160,15 +159,21 @@
                             <span class="badge bg-success badge-estado">{{ o.estado }}</span>
                         {% endif %}
                     </td>
+
                     <td>{{ o.fecha.strftime("%d/%m/%Y") }}</td>
+
                     <td>
                         <a href="/cambiar/{{ o.id }}" class="btn btn-sm btn-primary">
                             <i class="fa-solid fa-rotate"></i>
                         </a>
+
+                        {% if session["rol"] == "admin" %}
                         <a href="/borrar/{{ o.id }}" class="btn btn-sm btn-danger">
                             <i class="fa-solid fa-trash"></i>
                         </a>
+                        {% endif %}
                     </td>
+
                 </tr>
                 {% endfor %}
             </tbody>

@@ -17,9 +17,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ======================
+# =========================
 # MODELOS
-# ======================
+# =========================
 
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -27,9 +27,17 @@ class Usuario(db.Model):
     password = db.Column(db.String(200), nullable=False)
     rol = db.Column(db.String(50), nullable=False, default="tecnico")
 
+class Equipo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    marca = db.Column(db.String(100))
+    serie = db.Column(db.String(100))
+    ubicacion = db.Column(db.String(100))
+    ordenes = db.relationship("Orden", backref="equipo_rel", lazy=True)
+
 class Orden(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    equipo = db.Column(db.String(100), nullable=False)
+    equipo_id = db.Column(db.Integer, db.ForeignKey("equipo.id"), nullable=False)
     tecnico = db.Column(db.String(100), nullable=False)
     estado = db.Column(db.String(50), nullable=False, default="Pendiente")
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
@@ -37,9 +45,9 @@ class Orden(db.Model):
 with app.app_context():
     db.create_all()
 
-# ======================
-# REGISTRO
-# ======================
+# =========================
+# LOGIN / REGISTER
+# =========================
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -55,15 +63,9 @@ def register():
         nuevo = Usuario(username=username, password=password, rol=rol)
         db.session.add(nuevo)
         db.session.commit()
-
-        flash("Usuario creado correctamente")
         return redirect(url_for("login"))
 
     return render_template("register.html")
-
-# ======================
-# LOGIN
-# ======================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -74,8 +76,8 @@ def login():
             session["user"] = user.username
             session["rol"] = user.rol
             return redirect(url_for("index"))
-        else:
-            flash("Credenciales incorrectas")
+
+        flash("Credenciales incorrectas")
 
     return render_template("login.html")
 
@@ -84,29 +86,17 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# ======================
+# =========================
 # PANEL PRINCIPAL
-# ======================
+# =========================
 
 @app.route("/")
 def index():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    busqueda = request.args.get("buscar", "")
-    estado_filtro = request.args.get("estado", "")
-
-    query = Orden.query
-
-    if busqueda:
-        query = query.filter(
-            Orden.equipo.ilike(f"%{busqueda}%")
-        )
-
-    if estado_filtro:
-        query = query.filter_by(estado=estado_filtro)
-
-    ordenes = query.order_by(Orden.fecha.desc()).all()
+    ordenes = Orden.query.order_by(Orden.fecha.desc()).all()
+    equipos = Equipo.query.all()
 
     total = Orden.query.count()
     pendientes = Orden.query.filter_by(estado="Pendiente").count()
@@ -116,6 +106,7 @@ def index():
     return render_template(
         "index.html",
         ordenes=ordenes,
+        equipos=equipos,
         total=total,
         pendientes=pendientes,
         proceso=proceso,
@@ -128,41 +119,78 @@ def crear():
         return redirect(url_for("login"))
 
     nueva = Orden(
-        equipo=request.form["equipo"],
+        equipo_id=request.form["equipo_id"],
         tecnico=session["user"]
     )
 
     db.session.add(nueva)
     db.session.commit()
-
     return redirect(url_for("index"))
 
 @app.route("/cambiar/<int:id>")
 def cambiar(id):
-    if "user" not in session:
-        return redirect(url_for("login"))
-
-    orden = Orden.query.get(id)
+    orden = Orden.query.get_or_404(id)
     estados = ["Pendiente", "En proceso", "Finalizado"]
     orden.estado = estados[(estados.index(orden.estado) + 1) % len(estados)]
     db.session.commit()
-
     return redirect(url_for("index"))
 
 @app.route("/borrar/<int:id>")
 def borrar(id):
+    if session.get("rol") != "admin":
+        return redirect(url_for("index"))
+
+    orden = Orden.query.get_or_404(id)
+    db.session.delete(orden)
+    db.session.commit()
+    return redirect(url_for("index"))
+
+# =========================
+# EQUIPOS
+# =========================
+
+@app.route("/equipos")
+def equipos():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    if session["rol"] != "admin":
-        flash("No tienes permisos")
-        return redirect(url_for("index"))
+    lista = Equipo.query.all()
+    return render_template("equipos.html", equipos=lista)
 
-    orden = Orden.query.get(id)
-    db.session.delete(orden)
+@app.route("/equipos/crear", methods=["POST"])
+def crear_equipo():
+    nuevo = Equipo(
+        nombre=request.form["nombre"],
+        marca=request.form["marca"],
+        serie=request.form["serie"],
+        ubicacion=request.form["ubicacion"]
+    )
+    db.session.add(nuevo)
     db.session.commit()
+    return redirect(url_for("equipos"))
 
-    return redirect(url_for("index"))
+@app.route("/equipos/<int:id>")
+def detalle_equipo(id):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    equipo = Equipo.query.get_or_404(id)
+    return render_template("detalle_equipo.html", equipo=equipo)
+
+@app.route("/equipos/borrar/<int:id>")
+def borrar_equipo(id):
+    if session.get("rol") != "admin":
+        return redirect(url_for("equipos"))
+
+    equipo = Equipo.query.get_or_404(id)
+
+    if equipo.ordenes:
+        flash("No se puede eliminar el equipo porque tiene órdenes registradas.")
+        return redirect(url_for("equipos"))
+
+    db.session.delete(equipo)
+    db.session.commit()
+    return redirect(url_for("equipos"))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

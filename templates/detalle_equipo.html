@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ficha Técnica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+
+<h3>Ficha Técnica del Equipo</h3>
+
+<div class="card p-4 shadow">
+    <p><strong>Nombre:</strong> {{ equipo.nombre }}</p>
+    <p><strong>Marca:</strong> {{ equipo.marca }}</p>
+    <p><strong>Número de Serie:</strong> {{ equipo.serie }}</p>
+    <p><strong>Ubicación:</strong> {{ equipo.ubicacion }}</p>
+</div>
+
+<h5 class="mt-4">Órdenes Asociadas</h5>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Técnico</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for o in equipo.ordenes %}
+        <tr>
+            <td>{{ o.tecnico }}</td>
+            <td>{{ o.estado }}</td>
+            <td>{{ o.fecha.strftime("%d/%m/%Y") }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="/equipos" class="btn btn-secondary">Volver</a>
+
+</div>
+</body>
+</html>
