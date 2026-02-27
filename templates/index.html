@@ -1,22 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Panel - MedMaint</title>
+    <title>MedMaint - Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
     <script src="https://kit.fontawesome.com/4adad0b06d.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #1f2937, #111827);
+            color: white;
+        }
+        .card {
+            border-radius: 15px;
+        }
+        .table {
+            color: white;
+        }
+        .navbar {
+            background-color: #0f172a;
+        }
+        .badge-estado {
+            padding: 6px 10px;
+            border-radius: 20px;
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark shadow">
+    <div class="container-fluid">
+        <span class="navbar-brand">
+            <i class="fa-solid fa-screwdriver-wrench"></i> MedMaint
+        </span>
+
+        <div class="d-flex align-items-center text-white">
+            <i class="fa-solid fa-user me-2"></i>
+            <strong class="me-3">{{ session["user"] }}</strong>
+
+            <a href="/logout" class="btn btn-outline-light btn-sm">
+                <i class="fa-solid fa-right-from-bracket"></i> Salir
+            </a>
+        </div>
+    </div>
+</nav>
 
 <div class="container mt-4">
 
-<h2 class="mb-4">
-    <i class="fa-solid fa-screwdriver-wrench"></i> Panel de Mantenimiento
-</h2>
-
+<!-- DASHBOARD -->
 <div class="row mb-4">
     <div class="col-md-3">
-        <div class="card text-white bg-primary shadow">
-            <div class="card-body">
+        <div class="card bg-primary shadow">
+            <div class="card-body text-center">
+                <i class="fa-solid fa-layer-group fa-2x mb-2"></i>
                 <h5>Total</h5>
                 <h3>{{ total }}</h3>
             </div>
@@ -24,8 +65,9 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card text-white bg-warning shadow">
-            <div class="card-body">
+        <div class="card bg-warning shadow">
+            <div class="card-body text-center">
+                <i class="fa-solid fa-clock fa-2x mb-2"></i>
                 <h5>Pendientes</h5>
                 <h3>{{ pendientes }}</h3>
             </div>
@@ -33,8 +75,9 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card text-white bg-info shadow">
-            <div class="card-body">
+        <div class="card bg-info shadow">
+            <div class="card-body text-center">
+                <i class="fa-solid fa-gear fa-2x mb-2"></i>
                 <h5>En proceso</h5>
                 <h3>{{ proceso }}</h3>
             </div>
@@ -42,8 +85,9 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card text-white bg-success shadow">
-            <div class="card-body">
+        <div class="card bg-success shadow">
+            <div class="card-body text-center">
+                <i class="fa-solid fa-circle-check fa-2x mb-2"></i>
                 <h5>Finalizadas</h5>
                 <h3>{{ finalizadas }}</h3>
             </div>
@@ -51,68 +95,88 @@
     </div>
 </div>
 
-<form method="GET" class="row mb-3">
-    <div class="col-md-4">
-        <input type="text" name="buscar" class="form-control" placeholder="Buscar equipo...">
-    </div>
+<!-- BUSCADOR -->
+<div class="card bg-dark shadow p-3 mb-4">
+    <form method="GET" class="row g-2">
+        <div class="col-md-4">
+            <input type="text" name="buscar" class="form-control" placeholder="Buscar equipo...">
+        </div>
 
-    <div class="col-md-3">
-        <select name="estado" class="form-select">
-            <option value="">Todos los estados</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="En proceso">En proceso</option>
-            <option value="Finalizado">Finalizado</option>
-        </select>
-    </div>
+        <div class="col-md-3">
+            <select name="estado" class="form-select">
+                <option value="">Todos los estados</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="En proceso">En proceso</option>
+                <option value="Finalizado">Finalizado</option>
+            </select>
+        </div>
 
-    <div class="col-md-2">
-        <button class="btn btn-dark w-100">
-            Filtrar
-        </button>
-    </div>
-</form>
-
-<form method="POST" action="/crear" class="row mb-4">
-    <div class="col-md-6">
-        <input type="text" name="equipo" class="form-control" placeholder="Nombre del equipo" required>
-    </div>
-    <div class="col-md-2">
-        <button class="btn btn-success w-100">
-            Crear
-        </button>
-    </div>
-</form>
-
-<div class="card shadow">
-<div class="card-body">
-<table class="table table-hover">
-<thead>
-<tr>
-<th>Equipo</th>
-<th>Técnico</th>
-<th>Estado</th>
-<th>Fecha</th>
-<th>Acciones</th>
-</tr>
-</thead>
-<tbody>
-{% for o in ordenes %}
-<tr>
-<td>{{ o.equipo }}</td>
-<td>{{ o.tecnico }}</td>
-<td>{{ o.estado }}</td>
-<td>{{ o.fecha.strftime("%d/%m/%Y") }}</td>
-<td>
-<a href="/cambiar/{{ o.id }}" class="btn btn-sm btn-primary">Cambiar</a>
-<a href="/borrar/{{ o.id }}" class="btn btn-sm btn-danger">Borrar</a>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
+        <div class="col-md-2">
+            <button class="btn btn-light w-100">
+                <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+            </button>
+        </div>
+    </form>
 </div>
 
+<!-- CREAR ORDEN -->
+<div class="card bg-dark shadow p-3 mb-4">
+    <form method="POST" action="/crear" class="row g-2">
+        <div class="col-md-6">
+            <input type="text" name="equipo" class="form-control" placeholder="Nombre del equipo" required>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-success w-100">
+                <i class="fa-solid fa-plus"></i> Crear
+            </button>
+        </div>
+    </form>
 </div>
+
+<!-- TABLA -->
+<div class="card bg-dark shadow">
+    <div class="card-body">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Equipo</th>
+                    <th>Técnico</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in ordenes %}
+                <tr>
+                    <td>{{ o.equipo }}</td>
+                    <td>{{ o.tecnico }}</td>
+                    <td>
+                        {% if o.estado == "Pendiente" %}
+                            <span class="badge bg-warning badge-estado">{{ o.estado }}</span>
+                        {% elif o.estado == "En proceso" %}
+                            <span class="badge bg-info badge-estado">{{ o.estado }}</span>
+                        {% else %}
+                            <span class="badge bg-success badge-estado">{{ o.estado }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ o.fecha.strftime("%d/%m/%Y") }}</td>
+                    <td>
+                        <a href="/cambiar/{{ o.id }}" class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-rotate"></i>
+                        </a>
+                        <a href="/borrar/{{ o.id }}" class="btn btn-sm btn-danger">
+                            <i class="fa-solid fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</div>
+
 </body>
 </html>
