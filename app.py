@@ -6,12 +6,13 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# =========================
+# ==============================
 # CONFIGURACIÓN
-# =========================
+# ==============================
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "medmaint_secret_key")
 
+# Cookies seguras para Render (HTTPS)
 app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -29,9 +30,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# =========================
+# ==============================
 # MODELOS
-# =========================
+# ==============================
 
 class Usuario(db.Model):
     __tablename__ = "usuario"
@@ -40,6 +41,7 @@ class Usuario(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+
 
 class Equipo(db.Model):
     __tablename__ = "equipo"
@@ -52,25 +54,25 @@ class Equipo(db.Model):
     ubicacion = db.Column(db.String(100))
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
 
+
 class Orden(db.Model):
     __tablename__ = "orden"
 
     id = db.Column(db.Integer, primary_key=True)
     descripcion = db.Column(db.Text, nullable=False)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
     equipo_id = db.Column(db.Integer, db.ForeignKey("equipo.id"))
     equipo = db.relationship("Equipo", backref=db.backref("ordenes", lazy=True))
 
-# =========================
-# CREAR TABLAS AUTOMÁTICAMENTE
-# =========================
 
+# Crear tablas automáticamente
 with app.app_context():
     db.create_all()
 
-# =========================
+# ==============================
 # RUTAS
-# =========================
+# ==============================
 
 @app.route("/")
 def index():
@@ -82,15 +84,21 @@ def index():
 
     return render_template("index.html", ordenes=ordenes, equipos=equipos)
 
-# -------------------------
+
+# ==============================
 # LOGIN
-# -------------------------
+# ==============================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+
         email = request.form.get("email")
         password = request.form.get("password")
+
+        if not email or not password:
+            flash("Todos los campos son obligatorios")
+            return redirect(url_for("login"))
 
         usuario = Usuario.query.filter_by(email=email).first()
 
@@ -103,25 +111,33 @@ def login():
 
     return render_template("login.html")
 
-# -------------------------
+
+# ==============================
 # REGISTRO
-# -------------------------
+# ==============================
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+
         nombre = request.form.get("nombre")
         email = request.form.get("email")
-        password = generate_password_hash(request.form.get("password"))
+        password_raw = request.form.get("password")
+
+        if not nombre or not email or not password_raw:
+            flash("Todos los campos son obligatorios")
+            return redirect(url_for("register"))
 
         if Usuario.query.filter_by(email=email).first():
             flash("El usuario ya existe")
             return redirect(url_for("register"))
 
+        password_hash = generate_password_hash(password_raw)
+
         nuevo_usuario = Usuario(
             nombre=nombre,
             email=email,
-            password=password
+            password=password_hash
         )
 
         db.session.add(nuevo_usuario)
@@ -132,18 +148,20 @@ def register():
 
     return render_template("register.html")
 
-# -------------------------
+
+# ==============================
 # LOGOUT
-# -------------------------
+# ==============================
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# -------------------------
+
+# ==============================
 # AGREGAR EQUIPO
-# -------------------------
+# ==============================
 
 @app.route("/agregar_equipo", methods=["POST"])
 def agregar_equipo():
@@ -163,18 +181,26 @@ def agregar_equipo():
 
     return redirect(url_for("index"))
 
-# -------------------------
+
+# ==============================
 # AGREGAR ORDEN
-# -------------------------
+# ==============================
 
 @app.route("/agregar_orden", methods=["POST"])
 def agregar_orden():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    descripcion = request.form.get("descripcion")
+    equipo_id = request.form.get("equipo_id")
+
+    if not descripcion or not equipo_id:
+        flash("Datos incompletos")
+        return redirect(url_for("index"))
+
     nueva_orden = Orden(
-        descripcion=request.form.get("descripcion"),
-        equipo_id=request.form.get("equipo_id")
+        descripcion=descripcion,
+        equipo_id=equipo_id
     )
 
     db.session.add(nueva_orden)
@@ -182,9 +208,10 @@ def agregar_orden():
 
     return redirect(url_for("index"))
 
-# =========================
+
+# ==============================
 # PRODUCCIÓN
-# =========================
+# ==============================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
