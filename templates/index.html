@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MedMaint</title>
+</head>
+<body>
+    <h2>Sistema de Gestión de Mantenimiento</h2>
+
+    <form method="POST" action="/crear">
+        <input type="text" name="equipo" placeholder="Equipo" required>
+        <input type="text" name="tecnico" placeholder="Técnico" required>
+        <button type="submit">Agregar</button>
+    </form>
+
+    <hr>
+
+    {% for orden in ordenes %}
+        <p>
+            {{ orden.equipo }} - {{ orden.tecnico }} - {{ orden.estado }}
+            <a href="/cambiar/{{ orden.id }}">Cambiar</a>
+            <a href="/borrar/{{ orden.id }}">Borrar</a>
+        </p>
+    {% endfor %}
+
+    <br>
+    <a href="/logout">Cerrar sesión</a>
+</body>
+</html>
