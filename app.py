@@ -1,14 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
 
 app = Flask(__name__)
-
-# ==============================
-# CONFIGURACIÓN SEGURA
-# ==============================
-
 app.secret_key = os.environ.get("SECRET_KEY", "super_secret_key")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -22,8 +18,14 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 # ==============================
-# MODELO DE BASE DE DATOS
+# MODELOS
 # ==============================
+
+class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    rol = db.Column(db.String(50), nullable=False, default="tecnico")
 
 class Orden(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -32,22 +34,45 @@ class Orden(db.Model):
     estado = db.Column(db.String(50), nullable=False, default="Pendiente")
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Crear tablas automáticamente
 with app.app_context():
     db.create_all()
+
+# ==============================
+# REGISTRO
+# ==============================
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["usuario"]
+        password = generate_password_hash(request.form["clave"])
+        rol = request.form["rol"]
+
+        if Usuario.query.filter_by(username=username).first():
+            flash("El usuario ya existe")
+            return redirect(url_for("register"))
+
+        nuevo = Usuario(username=username, password=password, rol=rol)
+        db.session.add(nuevo)
+        db.session.commit()
+
+        flash("Usuario creado correctamente")
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
 
 # ==============================
 # LOGIN
 # ==============================
 
-USUARIO = os.environ.get("ADMIN_USER", "admin")
-CLAVE = os.environ.get("ADMIN_PASS", "1234")
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        if request.form["usuario"] == USUARIO and request.form["clave"] == CLAVE:
-            session["user"] = request.form["usuario"]
+        user = Usuario.query.filter_by(username=request.form["usuario"]).first()
+
+        if user and check_password_hash(user.password, request.form["clave"]):
+            session["user"] = user.username
+            session["rol"] = user.rol
             return redirect(url_for("index"))
         else:
             flash("Credenciales incorrectas")
@@ -60,7 +85,7 @@ def logout():
     return redirect(url_for("login"))
 
 # ==============================
-# RUTA PRINCIPAL
+# PANEL PRINCIPAL
 # ==============================
 
 @app.route("/")
@@ -71,10 +96,6 @@ def index():
     ordenes = Orden.query.order_by(Orden.fecha.desc()).all()
     return render_template("index.html", ordenes=ordenes)
 
-# ==============================
-# CREAR ORDEN
-# ==============================
-
 @app.route("/crear", methods=["POST"])
 def crear():
     if "user" not in session:
@@ -82,7 +103,7 @@ def crear():
 
     nueva = Orden(
         equipo=request.form["equipo"],
-        tecnico=request.form["tecnico"]
+        tecnico=session["user"]
     )
 
     db.session.add(nueva)
@@ -90,42 +111,32 @@ def crear():
 
     return redirect(url_for("index"))
 
-# ==============================
-# CAMBIAR ESTADO
-# ==============================
-
 @app.route("/cambiar/<int:id>")
 def cambiar(id):
     if "user" not in session:
         return redirect(url_for("login"))
 
     orden = Orden.query.get(id)
-    if orden:
-        estados = ["Pendiente", "En proceso", "Finalizado"]
-        orden.estado = estados[(estados.index(orden.estado) + 1) % len(estados)]
-        db.session.commit()
+    estados = ["Pendiente", "En proceso", "Finalizado"]
+    orden.estado = estados[(estados.index(orden.estado) + 1) % len(estados)]
+    db.session.commit()
 
     return redirect(url_for("index"))
-
-# ==============================
-# BORRAR ORDEN
-# ==============================
 
 @app.route("/borrar/<int:id>")
 def borrar(id):
     if "user" not in session:
         return redirect(url_for("login"))
 
+    if session["rol"] != "admin":
+        flash("No tienes permisos")
+        return redirect(url_for("index"))
+
     orden = Orden.query.get(id)
-    if orden:
-        db.session.delete(orden)
-        db.session.commit()
+    db.session.delete(orden)
+    db.session.commit()
 
     return redirect(url_for("index"))
-
-# ==============================
-# ARRANQUE PARA RENDER
-# ==============================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
