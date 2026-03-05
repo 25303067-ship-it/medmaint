@@ -6,9 +6,7 @@ import os
 app = Flask(__name__)
 app.secret_key = "medmaint_secret"
 
-# ==============================
 # CONFIGURACION BASE DE DATOS
-# ==============================
 
 database_url = os.getenv("DATABASE_URL")
 
@@ -22,9 +20,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ==============================
+# ======================
 # MODELOS
-# ==============================
+# ======================
 
 class Usuario(db.Model):
 
@@ -42,17 +40,17 @@ class Equipo(db.Model):
     estado = db.Column(db.String(50))
 
 
-# ==============================
-# CREAR TABLAS AUTOMATICAMENTE
-# ==============================
+# ======================
+# CREAR TABLAS AL INICIO
+# ======================
 
-@app.before_request
-def crear_tablas():
+with app.app_context():
     db.create_all()
 
-# ==============================
+
+# ======================
 # RUTA PRINCIPAL
-# ==============================
+# ======================
 
 @app.route("/")
 def index():
@@ -65,9 +63,9 @@ def index():
     return render_template("index.html", equipos=equipos)
 
 
-# ==============================
+# ======================
 # LOGIN
-# ==============================
+# ======================
 
 @app.route("/login", methods=["GET","POST"])
 def login():
@@ -82,18 +80,16 @@ def login():
         if usuario and check_password_hash(usuario.password, password):
 
             session["usuario_id"] = usuario.id
-
             return redirect(url_for("index"))
 
-        else:
-            flash("Credenciales incorrectas")
+        flash("Credenciales incorrectas")
 
     return render_template("login.html")
 
 
-# ==============================
-# REGISTRO
-# ==============================
+# ======================
+# REGISTER
+# ======================
 
 @app.route("/register", methods=["GET","POST"])
 def register():
@@ -106,13 +102,13 @@ def register():
 
         password_hash = generate_password_hash(password)
 
-        nuevo = Usuario(
+        nuevo_usuario = Usuario(
             nombre=nombre,
             email=email,
             password=password_hash
         )
 
-        db.session.add(nuevo)
+        db.session.add(nuevo_usuario)
         db.session.commit()
 
         return redirect(url_for("login"))
@@ -120,9 +116,9 @@ def register():
     return render_template("register.html")
 
 
-# ==============================
+# ======================
 # EQUIPOS
-# ==============================
+# ======================
 
 @app.route("/equipos", methods=["GET","POST"])
 def equipos():
@@ -152,9 +148,9 @@ def equipos():
     return render_template("equipos.html", equipos=lista)
 
 
-# ==============================
+# ======================
 # LOGOUT
-# ==============================
+# ======================
 
 @app.route("/logout")
 def logout():
@@ -163,10 +159,6 @@ def logout():
 
     return redirect(url_for("login"))
 
-
-# ==============================
-# RUN LOCAL
-# ==============================
 
 if __name__ == "__main__":
     app.run(debug=True)
