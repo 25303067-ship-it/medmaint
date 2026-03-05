@@ -1,5 +1,5 @@
-flask
+Flask
+Flask-SQLAlchemy
 gunicorn
 psycopg2-binary
-flask_sqlalchemy
-werkzeug
+Werkzeug

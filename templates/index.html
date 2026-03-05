@@ -1,185 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MedMaint - Panel</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- FontAwesome -->
-    <script src="https://kit.fontawesome.com/4adad0b06d.js" crossorigin="anonymous"></script>
 
-    <style>
-        body {
-            background: linear-gradient(135deg, #1f2937, #111827);
-            color: white;
-        }
-        .card {
-            border-radius: 15px;
-        }
-        .table {
-            color: white;
-        }
-        .navbar {
-            background-color: #0f172a;
-        }
-        .badge-estado {
-            padding: 6px 10px;
-            border-radius: 20px;
-        }
-    </style>
+<title>MedMaint</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
+
 <body>
-
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark shadow">
-    <div class="container-fluid">
-        <span class="navbar-brand">
-            <i class="fa-solid fa-screwdriver-wrench"></i> MedMaint
-        </span>
-
-        <div class="d-flex align-items-center text-white">
-            <a href="/equipos" class="btn btn-outline-light btn-sm me-3">
-                <i class="fa-solid fa-microchip"></i> Equipos
-            </a>
-
-            <i class="fa-solid fa-user me-2"></i>
-            <strong class="me-3">{{ session["user"] }}</strong>
-
-            <a href="/logout" class="btn btn-outline-light btn-sm">
-                <i class="fa-solid fa-right-from-bracket"></i> Salir
-            </a>
-        </div>
-    </div>
-</nav>
 
 <div class="container mt-4">
 
-<!-- DASHBOARD -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary shadow">
-            <div class="card-body text-center">
-                <i class="fa-solid fa-layer-group fa-2x mb-2"></i>
-                <h5>Total</h5>
-                <h3>{{ total }}</h3>
-            </div>
-        </div>
-    </div>
+<h2>Sistema de Gestión de Mantenimiento</h2>
 
-    <div class="col-md-3">
-        <div class="card bg-warning shadow">
-            <div class="card-body text-center">
-                <i class="fa-solid fa-clock fa-2x mb-2"></i>
-                <h5>Pendientes</h5>
-                <h3>{{ pendientes }}</h3>
-            </div>
-        </div>
-    </div>
+<a href="/equipos" class="btn btn-primary">Equipos</a>
 
-    <div class="col-md-3">
-        <div class="card bg-info shadow">
-            <div class="card-body text-center">
-                <i class="fa-solid fa-gear fa-2x mb-2"></i>
-                <h5>En proceso</h5>
-                <h3>{{ proceso }}</h3>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card bg-success shadow">
-            <div class="card-body text-center">
-                <i class="fa-solid fa-circle-check fa-2x mb-2"></i>
-                <h5>Finalizadas</h5>
-                <h3>{{ finalizadas }}</h3>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- CREAR ORDEN -->
-<div class="card bg-dark shadow p-4 mb-4">
-    <h5 class="mb-3">
-        <i class="fa-solid fa-plus"></i> Nueva Orden
-    </h5>
-
-    <form method="POST" action="/crear" class="row g-2">
-
-        <div class="col-md-6">
-            <select name="equipo_id" class="form-select" required>
-                <option value="">Seleccionar equipo</option>
-                {% for e in equipos %}
-                    <option value="{{ e.id }}">
-                        {{ e.nombre }} - {{ e.marca }} ({{ e.ubicacion }})
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="col-md-2">
-            <button class="btn btn-success w-100">
-                <i class="fa-solid fa-plus"></i> Crear
-            </button>
-        </div>
-
-    </form>
-</div>
-
-<!-- TABLA DE ÓRDENES -->
-<div class="card bg-dark shadow">
-    <div class="card-body">
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>Equipo</th>
-                    <th>Marca</th>
-                    <th>Ubicación</th>
-                    <th>Técnico</th>
-                    <th>Estado</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for o in ordenes %}
-                <tr>
-                    <td>{{ o.equipo_rel.nombre }}</td>
-                    <td>{{ o.equipo_rel.marca }}</td>
-                    <td>{{ o.equipo_rel.ubicacion }}</td>
-                    <td>{{ o.tecnico }}</td>
-
-                    <td>
-                        {% if o.estado == "Pendiente" %}
-                            <span class="badge bg-warning badge-estado">{{ o.estado }}</span>
-                        {% elif o.estado == "En proceso" %}
-                            <span class="badge bg-info badge-estado">{{ o.estado }}</span>
-                        {% else %}
-                            <span class="badge bg-success badge-estado">{{ o.estado }}</span>
-                        {% endif %}
-                    </td>
-
-                    <td>{{ o.fecha.strftime("%d/%m/%Y") }}</td>
-
-                    <td>
-                        <a href="/cambiar/{{ o.id }}" class="btn btn-sm btn-primary">
-                            <i class="fa-solid fa-rotate"></i>
-                        </a>
-
-                        {% if session["rol"] == "admin" %}
-                        <a href="/borrar/{{ o.id }}" class="btn btn-sm btn-danger">
-                            <i class="fa-solid fa-trash"></i>
-                        </a>
-                        {% endif %}
-                    </td>
-
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+<a href="/logout" class="btn btn-danger">Salir</a>
 
 </div>
 
