@@ -4,25 +4,30 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
-
 app.secret_key = "medmaint_secret"
 
-# Base de datos (Render o local)
-database_url = os.environ.get("DATABASE_URL")
+# ==============================
+# CONFIGURACION BASE DE DATOS
+# ==============================
+
+database_url = os.getenv("DATABASE_URL")
 
 if database_url:
     database_url = database_url.replace("postgres://", "postgresql://")
+else:
+    database_url = "sqlite:///medmaint.db"
 
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url or "sqlite:///medmaint.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ==========================
+# ==============================
 # MODELOS
-# ==========================
+# ==============================
 
 class Usuario(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100))
     email = db.Column(db.String(120), unique=True)
@@ -30,15 +35,24 @@ class Usuario(db.Model):
 
 
 class Equipo(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100))
     area = db.Column(db.String(100))
     estado = db.Column(db.String(50))
 
 
-# ==========================
-# RUTAS
-# ==========================
+# ==============================
+# CREAR TABLAS AUTOMATICAMENTE
+# ==============================
+
+@app.before_request
+def crear_tablas():
+    db.create_all()
+
+# ==============================
+# RUTA PRINCIPAL
+# ==============================
 
 @app.route("/")
 def index():
@@ -51,9 +65,9 @@ def index():
     return render_template("index.html", equipos=equipos)
 
 
-# ==========================
+# ==============================
 # LOGIN
-# ==========================
+# ==============================
 
 @app.route("/login", methods=["GET","POST"])
 def login():
@@ -68,17 +82,18 @@ def login():
         if usuario and check_password_hash(usuario.password, password):
 
             session["usuario_id"] = usuario.id
+
             return redirect(url_for("index"))
 
         else:
-            flash("Correo o contraseña incorrectos")
+            flash("Credenciales incorrectas")
 
     return render_template("login.html")
 
 
-# ==========================
+# ==============================
 # REGISTRO
-# ==========================
+# ==============================
 
 @app.route("/register", methods=["GET","POST"])
 def register():
@@ -91,25 +106,23 @@ def register():
 
         password_hash = generate_password_hash(password)
 
-        nuevo_usuario = Usuario(
+        nuevo = Usuario(
             nombre=nombre,
             email=email,
             password=password_hash
         )
 
-        db.session.add(nuevo_usuario)
+        db.session.add(nuevo)
         db.session.commit()
-
-        flash("Usuario registrado correctamente")
 
         return redirect(url_for("login"))
 
     return render_template("register.html")
 
 
-# ==========================
+# ==============================
 # EQUIPOS
-# ==========================
+# ==============================
 
 @app.route("/equipos", methods=["GET","POST"])
 def equipos():
@@ -139,9 +152,9 @@ def equipos():
     return render_template("equipos.html", equipos=lista)
 
 
-# ==========================
+# ==============================
 # LOGOUT
-# ==========================
+# ==============================
 
 @app.route("/logout")
 def logout():
@@ -151,17 +164,9 @@ def logout():
     return redirect(url_for("login"))
 
 
-# ==========================
-# CREAR BASE DE DATOS
-# ==========================
-
-with app.app_context():
-    db.create_all()
-
-
-# ==========================
+# ==============================
 # RUN LOCAL
-# ==========================
+# ==============================
 
 if __name__ == "__main__":
     app.run(debug=True)
